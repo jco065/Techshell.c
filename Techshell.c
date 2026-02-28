@@ -6,177 +6,268 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <limits.h>
-
-
 #define INPUT_MAX 256
 #define ARGS_MAX  64
+#include <fcntl.h> 
 
+char directory[PATH_MAX];
+char input[67];
+char *args[ARGS_MAX];
 //4. Forbidden functions include system()and popen()
-
-
     /// displays money sign plus what ever 
     // ~$ if they ` it goes to home and if
     // they make itso what ever direcotry your in it display is and what ever is in it 
     //prints wirking direcotry 
-char extractor(char args[],char input[])
-char ls(char input[], char args[],pid_t pid)
+    char *infile = NULL;
+    char *outfile = NULL;
+void cd(char *args[]);
+void superman(char *args[]);
+void extractor(char *input, char *args[]);
+int execvp(const char *file, char *const argv[]);
+void PACKMAN(char *INNNY, char *OUTTY);
 
+pid_t pid;
+char *home;
+char *root;
+char *INNNY = NULL;
+char *OUTTY = NULL;
 
-int main(void){
-    // its making the 
+  int main(void){
 char directory[PATH_MAX];
 char input[67];
-char args[4]
-
-/*
-execvp basically do the project lol
-
-ls_args[0] = "ls";
-ls_args[1] = "-l" ;
-ls_args[2] = "ls";
-ls_args[3] = NULL
-
-
-
-
-//variable pointer to home 
-char *root = getenv("ROOT") 
- pid_t pid = fork();
-
- */
+///char *args[4];
 
 char *home = getenv ("HOME");
+char *root = getenv("ROOT");
 
 
-//the while makes it contunie until a condition is meet
+ home = getenv("HOME");
+
+ if(home != NULL){
+    chdir(home);
+ }
 while(1){
-if (getcwd(directory, sizeof(directory)) != NULL){
-            printf("$ %s$ \n", directory);
-        }
-//if stirng they typed is ~ then  go to home on computer
+ 
+char directory[PATH_MAX];
+
+if (getcwd(directory, sizeof(directory)) != NULL) {
+    printf("$ %s$ ", directory);
+            fflush(stdout);
+}
+
 // ok so i have to to stdin to read the leyobard store into array the fgets to read the string then 
 // this reads my keyboard
-fgets(input,67,stdin)
-//werid cases like cd having extra stuff 
-    exctractor();
+fgets(input,67,stdin);
+extractor(input, args);
+int check_FORPACK = 0;
 
-
-if(strcmp(args[0],"cd"){
-cd(); 
+for (int i = 0; args[i] != NULL; i++) {
+    if (strcmp(args[i], "<") == 0 || strcmp(args[i], ">") == 0){
+    check_FORPACK =1;
+ break;
 }
-if (input[0] == "exit" ){
-    exit();
-}
-if(input[0] == "ls"){
-    exctractor();
-}
-if(input[0] == "pwd"){
-    exctractor();
-
-}
-if(input[0] == "cat"){
-extractor();
 }
 
+if (strcmp(args[0], "exit") == 0) 
+
+exit(0);
+
+char *INNNY = NULL;
+char *OUTTY = NULL;
+
+for (int i = 0; args[i] != NULL; i++) {
+    if (strcmp(args[i], "<") == 0 && args[i+1]) 
+    
+    infile = args[i+1];
+    if (strcmp(args[i], ">") == 0 && args[i+1]) 
+    
+    outfile = args[i+1];
 }
+
+if (strcmp(args[0], "cd") == 0) {
+    cd(args);
+} else {
+    superman(args);
+}
+
+
+
 //if command equals  ~
 //if  our enviorment variable == null 
 //printf(" cant find////////enviroment variable that they put in ")
-
-
 // args need to be a pointer varibale that goes into t 
-char extractor(char input[],char args[],char pid){
 
-      int i = 0;
-      fork();
-    if(pid < 0){
-         perror("fork error ")
-    }
 
-if(pid == 0){
+}
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void extractor(char *input, char *args[]) {
+          int i = 0;
                 //snipping  wings 
             args[i] = strtok(input, " \n\t");
     // while its not null i loop through the array and stripping its wings
- while(args[i] != NULL){
+
+    //
+ while(args[i] != NULL && i < ARGS_MAX -1 ){
         i++;  
         // had to add a null becuase execvp is kinda stupid 
         args[i] = strtok(NULL, " \n\t");//snip snip 
-        
     // goal is finished
-        execvp(args[0], args);}
+    }
+        // it wont fucking end with NULL
+        args[i] = NULL;
 
 }
 
+void superman(char *args[]){
+       pid = fork();
 
+if(pid < 0){
+    perror("child failed its mission ");
+    return;
+
+}
+if(pid == 0){
+    if(args[1] == NULL){
+}
+
+if(args[1] && strcmp(args[1], "/root") == 0){
+            fprintf(stderr, "root access DENIED\n");
+                        exit(1);
+}
+        PACKMAN(INNNY, OUTTY);
+        int i = 0;
+
+
+while (args[i] != NULL) {
+
+    if (strcmp(args[i], "<") == 0) {
+        args[i] = NULL;   //cut
+        break;
+    }
+
+    if (strcmp(args[i], ">") == 0) {
+        args[i] = NULL;   // cut c
+        break;
+    }
+
+    i++;
+}
+
+
+execvp(args[0],args);
+perror("execvp");
+exit(1);
+}
+    wait(NULL);
 }
 
 //if the secined argument is not anything there then u just run home 
-char cd(char input[], *char args[],pid_t pid){
-extractor()
-
-    if(arg[1] == NULL){
-    chdir(home);
+void cd(char *args[]){
+home = getenv("HOME");
+    if (args[1] == NULL || strcmp(args[1], "~") == 0) {
+        if (home) chdir(home);    
+        return;
+}
+if(args[1] && strcmp(args[1], "/") == 0){
+    perror("cannot open directory /root: Permission denied");
 }
 
-if(arg[1] == "~")
-chdir(home);
-
-// i should maybe put zero here ngl i dont think null will cover a case 
-if(arg[1 != 0]){
-perror("Cd");
-}
-
-}
-
-
-
-char ls(char input[], *char args[],pid_t pid){
-    // break steing store the arguemnsts run into execvp profit 
-    //not like javava i have to like
-       if(pid < 0){
-perror(" WOMP WOMP err")
-    if(pid == 0){
-exctractor();
-        execvp(input,args)
-
-
+//if the string 
+if (chdir(args[1]) != 0){
+        perror("cd");
     }
+ 
+}
+
+
+///// >..........
+
+void PACKMAN(char *INNNY, char *OUTTY) {
+        //opendirr assgin  somehting to the file  u want to copy 
+    //find files'
+    //copy one form another  toi goal 
+    //close files
+    //close dir 
+//open the file dp whatever 
+
+
+
+
+if (INNNY) {
+        int IN = open(INNNY, O_RDONLY);
+        if(IN < 0) {
+            perror("");
+            exit(1);
+        dup2(IN, 0);
+        close(IN);
+        }
+
+if (OUTTY != NULL) {
+int OUT = open(OUTTY,O_CREAT | O_WRONLY | O_TRUNC,0664);
+ dup2(OUT,1);
+close(OUT);
 }
 }
 
 
-char pwd(char input[],*char args[], pid_t pid){
-    if(pid < 0){
-perror(" WOMP WOMP err")
-    if(pid == 0){
-exctractor();
-        execvp(input,args)
-     }
-}
-}
-
-char cat (char input[],*char args[], pid_t pid){
-    if(pid < 0){
-perror(" WOMP WOMP err")
-    if(pid == 0){
-exctractor();
-        execvp(input,args)
-     }
-}
 }
 
 
-char mkdir(char input[],*char args[], pid_t pid){
-    if(pid < 0){
-perror(" WOMP WOMP err")
-    if(pid == 0){
-exctractor();
-        execvp(input,args)
-     }
-}
-}
-return 0;
 
-}
-
+    
 
