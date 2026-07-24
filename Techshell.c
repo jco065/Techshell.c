@@ -18,6 +18,40 @@ typedef struct{
 } ShellCommand;
 
 
+char** SpiltBySpace(char* input) {
+  char **words_by_space = calloc(20, sizeof(char*));
+  for(int i=0;i<=10;i++) {
+    words_by_space[i] = (char*) calloc(1, 50);
+  }
+  int wbsi = 0;
+
+  char cur_word[50] = {'\0'};
+  int cur_word_index = 0;
+
+  int length = strlen(input); //sizeof(*input) / sizeof(input[0]);
+  for (int i = 0; i < length; i ++) {
+    char c = input[i];
+    printf("i: %d, c: %c\n", i, c);
+    if ((c == ' ') || (c == '\n')) {
+      //check new word
+      //cur_word_index += 1;
+      cur_word[cur_word_index] += '\0';
+      printf("|%s|\n", cur_word);
+      //push cur word to arr of words
+      strcpy(words_by_space[wbsi], cur_word);
+      wbsi += 1;
+      //reset cur word
+      memset(cur_word, '\0', sizeof(cur_word));
+      cur_word_index = 0;
+    } else {
+      cur_word[cur_word_index] = c;
+      cur_word_index += 1;
+    }
+  }
+
+  return words_by_space;
+}
+
 void fork_and_run(ShellCommand* command) {
 //Fork Process
 //Parent -> Check for Success -> Wait
@@ -25,17 +59,22 @@ void fork_and_run(ShellCommand* command) {
 }
 
 char* CommandPrompt() {
-  char *raw_input = calloc(50, sizeof(char));
+  char *raw_input = calloc(100, sizeof(char));
   //Print current dir, and username
   printf("$ ");
-  scanf("%s", raw_input);
+fgets(raw_input, 100, stdin);
   return raw_input;
 }
 
 
 ShellCommand* ParseCommandLine(char* input) {
   ShellCommand *CommandInfo = calloc(1, sizeof(ShellCommand));
-  if (strcmp(input, "exit") == 0) {
+ 
+  char** spilt_by_space = SpiltBySpace(input);
+
+  printf("<%s>", spilt_by_space[0]);
+
+  if (strcmp(spilt_by_space[0], "exit") == 0) {
     CommandInfo->cmd = EXIT;
   } else {
     CommandInfo->cmd = NOTBUILTIN;
@@ -64,6 +103,7 @@ int main() {
 
   for (;;) {
     input = CommandPrompt();
+    printf("||%s||\n", input);
     // parse the command line
     command = ParseCommandLine(input);
     // execute the command
