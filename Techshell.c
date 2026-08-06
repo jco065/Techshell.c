@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-
-
+#include <sys/wait.h>
+#include <errno.h>
 enum CMD {
 
   THEN,      //  &&
@@ -165,11 +165,19 @@ ShellCommand* SpiltIntoCmd(char** input) {
   return CommandInfo;
 }
 
-void fork_and_run(ShellCommand* command) {
-  printf(">  %s\n", command->args[0]);
-//Fork Process
-//Parent -> Check for Success -> Wait
-//Child  -> execvp() -> Check
+void fork_and_run(ShellCommand *command) {
+  char **args = command->args;
+  pid_t pid = fork();
+  if (pid < 0) {
+    perror("fork");
+    return;
+  }
+  if (pid == 0) {
+    execvp(args[0], args);
+    fprintf(stderr, "Error %d (%s)\n", errno, strerror(errno));
+    exit(1);
+  }
+  wait(NULL);
 }
 
 char* CommandPrompt() {
