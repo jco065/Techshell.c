@@ -5,9 +5,16 @@
 #include <unistd.h>
 #include <string.h>
 
+
 enum CMD {
-  PIPE,   // |
-  ANDAND, // &&
+
+  THEN,      //  &&
+  ELSE,      //  ||
+  OUTPUT,    //  >
+  INPUT,     //  <
+  APPEND,    //  >>
+  ERRAPPEND, //  2>,
+  PIPE,      //  |
   EXIT,
   NOTBUILTIN
 };
@@ -22,83 +29,90 @@ typedef struct ShellCommand{
 
 char** SpiltBySpace(char* input) {
   char **words_by_space = calloc(20, sizeof(char*));
+
   for(int i=0;i<=10;i++) {
     words_by_space[i] = (char*) calloc(1, 50);
   }
-  int wbsi = 0;
 
+  int wbsi = 0;
   char cur_word[50] = {'\0'};
   int cur_word_index = 0;
+  int length = strlen(input);
 
-  int length = strlen(input); //sizeof(*input) / sizeof(input[0]);
   for (int i = 0; i < length; i ++) {
     char c = input[i];
-    //printf("i: %d, c: %c\n", i, c);
     if ((c == ' ') || (c == '\n')) {
       //check new word
-      //cur_word_index += 1;
       cur_word[cur_word_index] += '\0';
-      //printf("|%s|\n", cur_word);
+
       //push cur word to arr of words
       strcpy(words_by_space[wbsi], cur_word);
       wbsi += 1;
+
       //reset cur word
       memset(cur_word, '\0', sizeof(cur_word));
       cur_word_index = 0;
-    } else {
+
+    } else { //keep adding
       cur_word[cur_word_index] = c;
       cur_word_index += 1;
     }
   }
 
-  //printf(">%d<", wbsi);
+  //Null is added so we know when the words arr ends
   words_by_space[wbsi] = NULL;
 
   return words_by_space;
 }
 
+void print_string_arr(char** input) {
+  int ti = 0;
+  while(input[ti] != NULL) {
+    printf("%s ", input[ti]);
+    ti += 1;
+  }
+  printf("\n");
+}
 
 
 ShellCommand* SpiltIntoCmd(char** input) {
-  int ti = 0;
-  printf("###\n");
-  while(input[ti] != NULL) {
-  printf("%s ", input[ti]);
-  ti += 1;
-  }
-  printf("\n###\n");
-  const char *speial_ops[][5] = { {"<", ">", ">>", "2>", NULL}, {"|", "|&", NULL, NULL}, {"&&", "||", NULL, NULL} };
+  //Split up to allow for presidance (Handle < before &&)
+  const char *special_ops[][5] = { {"<", ">", ">>", "2>", NULL}, {"|", NULL}, {"&&", "||", NULL} };
 
   ShellCommand *CommandInfo = calloc(1, sizeof(ShellCommand));
- 
+
+  //Find the size of the input/words by space
   int size_of_wbs = 0;
   while (input[size_of_wbs] != NULL) {
     size_of_wbs += 1;
-    //printf("--> %d\n", size_of_wbs);
   }
 
+  //Loop over all of the speical operators 
   for (int i = 0; i < 3; i++ ) {
     int ii = 0;
-    while (speial_ops[i][ii] != NULL) { //for (int ii = 0; ii <= 4; ii++) {
+    while (special_ops[i][ii] != NULL) { //for (int ii = 0; ii <= 4; ii++) {
      
+      //Loop over input 
       for (int j = 0; j < size_of_wbs; j++) {
-        //printf("*%s* is *%s* == %d\n", speial_ops[i][ii], input[j], strcmp(speial_ops[i][ii], input[j]));
-        if (strcmp(speial_ops[i][ii], input[j]) == 0) {
-          //split
-          //CommandInfo->cmd = speial_ops;
-          //printf("test \n"); 
-          if ( strcmp(input[j], "&&") == 0 ) {
-              printf("and\n");
-              CommandInfo->cmd = ANDAND;
-          }
 
+        //Check for match
+        if (strcmp(special_ops[i][ii], input[j]) == 0) {
+          // If we find a match we split the two sides of the match and parse both of them, before assign to a parent command
+
+          //Check what the match was then assign the matching enum value
+          if ( strcmp(input[j], "&&") == 0 ) {
+              CommandInfo->cmd = THEN;
+          }
+          //TODO Add remainging enum types
+
+          //Calc size of each half
           int lhs = j + 1;
           int rhs = size_of_wbs - j;
 
           char **left_half = calloc( lhs, sizeof(char*));
           char **right_half = calloc( rhs, sizeof(char*));
-          printf("|%d, %d|\n", lhs, rhs);
 
+          //Preassign size for each word in each half
           for(int i=0;i<=lhs;i++) {
             left_half[i] = (char*) calloc(1, 50);
           }
@@ -106,27 +120,23 @@ ShellCommand* SpiltIntoCmd(char** input) {
             right_half[i] = (char*) calloc(1, 50);
           }
 
+          //Loop over all words, and split input into 2 array from before and after the match
           for( int si = 0; si < size_of_wbs; si++ ) {
-            printf("si: %d\n", si);
-            if (si == j) {
-
-            } else if (si < j) {
+            if (si < j) {
               strcpy(left_half[si], input[si]);
-              printf("LH[%d]: %s\n", si, input[si]);
-            } else {
+            } else if (si > j) {
               strcpy(right_half[si-j-1], input[si]);
-              printf("RH[%d]: %s\n", si-j-1, input[si]);
             }
           }
-        
+       
+          //Add NULL to end so we can detect the end of the array later on
           left_half[lhs - 1] = NULL;
           right_half[rhs - 1] = NULL;
 
-          //printf("_%d_", size_of_wbs);
-          
           ShellCommand *CommandLeft = calloc(1, sizeof(ShellCommand));
           ShellCommand *CommandRight = calloc(1, sizeof(ShellCommand));
 
+          //Recursive call to SpiltIntoCmd to keep going untill it returns only one command
           CommandLeft = SpiltIntoCmd( left_half );
           CommandRight = SpiltIntoCmd( right_half );
 
@@ -143,10 +153,8 @@ ShellCommand* SpiltIntoCmd(char** input) {
 
   //return only one (NO More/Any speicals ops)
  
-  printf("    __%s__\n", input[0]);
-
+  //TODO Add other built in commands
   if (strcmp(input[0], "exit") == 0) {
-    printf("EXIT CODE\n");
     CommandInfo->cmd = EXIT;
   } else {
     CommandInfo->cmd = NOTBUILTIN;
@@ -178,23 +186,18 @@ ShellCommand* ParseCommandLine(char* input) {
  
   char** spilt_by_space = SpiltBySpace(input);
 
-  //printf("<%s>", spilt_by_space[0]);
-
   CommandInfo = SpiltIntoCmd(spilt_by_space);
-
-  
 
   return CommandInfo;
 }
 
 
 void ExecuteCommand(ShellCommand* command) {
-  printf("*****{%d}****\n", command->cmd);
   switch (command->cmd) {
-    case ANDAND:
-      printf("AA\n");
+    //TODO Add other built-ins to be handled
+    case THEN:
       ExecuteCommand(command->left_cmd);
-      //Check for Success before running right
+      //TODO: Check for Success before running right
       ExecuteCommand(command->right_cmd);
     break;
     case EXIT:
@@ -214,7 +217,6 @@ int main() {
 
   for (;;) {
     input = CommandPrompt();
-    //printf("||%s||\n", input);
     // parse the command line
     command = ParseCommandLine(input);
     // execute the command
