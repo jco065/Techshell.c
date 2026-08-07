@@ -100,10 +100,27 @@ ShellCommand* SpiltIntoCmd(char** input) {
           // If we find a match we split the two sides of the match and parse both of them, before assign to a parent command
 
           //Check what the match was then assign the matching enum value
-          if ( strcmp(input[j], "&&") == 0 ) {
+          if (strcmp(input[j], "&&") == 0) {
               CommandInfo->cmd = THEN;
           }
-          //TODO Add remainging enum types
+          else if (strcmp(input[j], "||") == 0) {
+			  CommandInfo->cmd = ELSE;
+		  }
+		  else if (strcmp(input[j], ">") == 0) {
+			  CommandInfo->cmd = OUTPUT;
+		  }
+		  else if (strcmp(input[j], "<") == 0) {
+			  CommandInfo->cmd = INPUT;
+		  }
+		  else if (strcmp(input[j], ">>") == 0) {
+			  CommandInfo->cmd = APPEND;
+		  }
+		  else if (strcmp(input[j], "2>") == 0) {
+			  CommandInfo->cmd = ERRAPPEND;
+		  }
+		  else if (strcmp(input[j], "|") == 0) {
+			  CommandInfo->cmd = PIPE;
+		  }
 
           //Calc size of each half
           int lhs = j + 1;
