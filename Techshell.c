@@ -24,6 +24,10 @@ typedef struct ShellCommand{
   struct ShellCommand *left_cmd;
   struct ShellCommand *right_cmd;
   char **args;
+  
+  // redirection file names for < >
+  char *input_file;
+  char *output_file;
 } ShellCommand;
 
 
@@ -108,12 +112,15 @@ ShellCommand* SpiltIntoCmd(char** input) {
 		  }
 		  else if (strcmp(input[j], ">") == 0) {
 			  CommandInfo->cmd = OUTPUT;
+			  CommandInfo->output_file = strdup(input[j + 1]);
 		  }
 		  else if (strcmp(input[j], "<") == 0) {
 			  CommandInfo->cmd = INPUT;
+			  CommandInfo->input_file = strdup(input[j + 1]);
 		  }
 		  else if (strcmp(input[j], ">>") == 0) {
 			  CommandInfo->cmd = APPEND;
+			  CommandInfo->output_file = strdup(input[j + 1]);
 		  }
 		  else if (strcmp(input[j], "2>") == 0) {
 			  CommandInfo->cmd = ERRAPPEND;
