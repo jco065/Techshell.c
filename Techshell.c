@@ -16,6 +16,7 @@ enum CMD {
   ERRAPPEND, //  2>,
   PIPE,      //  |
   EXIT,
+  INVALID,
   NOTBUILTIN
 };
 
@@ -25,9 +26,10 @@ typedef struct ShellCommand{
   struct ShellCommand *right_cmd;
   char **args;
   
-  // redirection file names for < >
+  // redirection file names
   char *input_file;
   char *output_file;
+  char *error_file;
 } ShellCommand;
 
 
@@ -102,7 +104,13 @@ ShellCommand* SpiltIntoCmd(char** input) {
         //Check for match
         if (strcmp(special_ops[i][ii], input[j]) == 0) {
           // If we find a match we split the two sides of the match and parse both of them, before assign to a parent command
-
+		  
+		  // make sure the operator has something on both sides
+		  if (j == 0 || j == size_of_wbs - 1) {
+			  CommandInfo->cmd = INVALID;
+			  return CommandInfo;
+		  }
+		  
           //Check what the match was then assign the matching enum value
           if (strcmp(input[j], "&&") == 0) {
               CommandInfo->cmd = THEN;
@@ -124,6 +132,7 @@ ShellCommand* SpiltIntoCmd(char** input) {
 		  }
 		  else if (strcmp(input[j], "2>") == 0) {
 			  CommandInfo->cmd = ERRAPPEND;
+			  CommandInfo->error_file = strdup(input[j + 1]);
 		  }
 		  else if (strcmp(input[j], "|") == 0) {
 			  CommandInfo->cmd = PIPE;
@@ -228,6 +237,9 @@ void ExecuteCommand(ShellCommand* command) {
       printf("done");
       exit(0);
     break;
+	case INVALID:
+	  printf("Invalid command\n");
+	  break;
     case NOTBUILTIN:
       fork_and_run(command);
     break;
