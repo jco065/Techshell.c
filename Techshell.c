@@ -16,6 +16,8 @@ enum CMD {
   ERRAPPEND, //  2>,
   PIPE,      //  |
   EXIT,
+  CD,
+  INVALID,
   NOTBUILTIN
 };
 
@@ -24,6 +26,15 @@ typedef struct ShellCommand{
   struct ShellCommand *left_cmd;
   struct ShellCommand *right_cmd;
   char **args;
+  
+  // redirection file names
+  char *input_file;
+  char *output_file;
+  char *error_file;
+  
+  // directory used for cd
+  char *directory;
+  
 } ShellCommand;
 
 
@@ -98,12 +109,39 @@ ShellCommand* SpiltIntoCmd(char** input) {
         //Check for match
         if (strcmp(special_ops[i][ii], input[j]) == 0) {
           // If we find a match we split the two sides of the match and parse both of them, before assign to a parent command
-
+		  
+		  // make sure the operator has something on both sides
+		  if (j == 0 || j == size_of_wbs - 1) {
+			  CommandInfo->cmd = INVALID;
+			  return CommandInfo;
+		  }
+		  
           //Check what the match was then assign the matching enum value
-          if ( strcmp(input[j], "&&") == 0 ) {
+          if (strcmp(input[j], "&&") == 0) {
               CommandInfo->cmd = THEN;
           }
-          //TODO Add remainging enum types
+          else if (strcmp(input[j], "||") == 0) {
+			  CommandInfo->cmd = ELSE;
+		  }
+		  else if (strcmp(input[j], ">") == 0) {
+			  CommandInfo->cmd = OUTPUT;
+			  CommandInfo->output_file = strdup(input[j + 1]);
+		  }
+		  else if (strcmp(input[j], "<") == 0) {
+			  CommandInfo->cmd = INPUT;
+			  CommandInfo->input_file = strdup(input[j + 1]);
+		  }
+		  else if (strcmp(input[j], ">>") == 0) {
+			  CommandInfo->cmd = APPEND;
+			  CommandInfo->output_file = strdup(input[j + 1]);
+		  }
+		  else if (strcmp(input[j], "2>") == 0) {
+			  CommandInfo->cmd = ERRAPPEND;
+			  CommandInfo->error_file = strdup(input[j + 1]);
+		  }
+		  else if (strcmp(input[j], "|") == 0) {
+			  CommandInfo->cmd = PIPE;
+		  }
 
           //Calc size of each half
           int lhs = j + 1;
@@ -156,7 +194,22 @@ ShellCommand* SpiltIntoCmd(char** input) {
   //TODO Add other built in commands
   if (strcmp(input[0], "exit") == 0) {
     CommandInfo->cmd = EXIT;
-  } else {
+  }
+  else if (strcmp(input[0], "cd") == 0) {
+	
+	// cd should only have one directory argument
+	if (input[2] != NULL) {
+		CommandInfo->cmd = INVALID;
+	}
+	else {
+		CommandInfo->cmd = CD;
+	
+		if (input[1] != NULL) {
+			CommandInfo->directory = strdup(input[1]);
+		}
+	}
+  }
+  else {
     CommandInfo->cmd = NOTBUILTIN;
   }
 
@@ -208,10 +261,20 @@ void ExecuteCommand(ShellCommand* command) {
       //TODO: Check for Success before running right
       ExecuteCommand(command->right_cmd);
     break;
+	
     case EXIT:
       printf("done");
       exit(0);
     break;
+	
+	case CD:
+	  // TODO implement changing directory
+	  break;
+	  
+	case INVALID:
+	  printf("Invalid command\n");
+	  break;
+	  
     case NOTBUILTIN:
       fork_and_run(command);
     break;
