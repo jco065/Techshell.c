@@ -16,6 +16,7 @@ enum CMD {
   ERRAPPEND, //  2>,
   PIPE,      //  |
   EXIT,
+  CD,
   INVALID,
   NOTBUILTIN
 };
@@ -30,6 +31,10 @@ typedef struct ShellCommand{
   char *input_file;
   char *output_file;
   char *error_file;
+  
+  // directory used for cd
+  char *directory;
+  
 } ShellCommand;
 
 
@@ -189,7 +194,22 @@ ShellCommand* SpiltIntoCmd(char** input) {
   //TODO Add other built in commands
   if (strcmp(input[0], "exit") == 0) {
     CommandInfo->cmd = EXIT;
-  } else {
+  }
+  else if (strcmp(input[0], "cd") == 0) {
+	
+	// cd should only have one directory argument
+	if (input[2] != NULL) {
+		CommandInfo->cmd = INVALID;
+	}
+	else {
+		CommandInfo->cmd = CD;
+	
+		if (input[1] != NULL) {
+			CommandInfo->directory = strdup(input[1]);
+		}
+	}
+  }
+  else {
     CommandInfo->cmd = NOTBUILTIN;
   }
 
@@ -233,13 +253,20 @@ void ExecuteCommand(ShellCommand* command) {
       //TODO: Check for Success before running right
       ExecuteCommand(command->right_cmd);
     break;
+	
     case EXIT:
       printf("done");
       exit(0);
     break;
+	
+	case CD:
+	  // TODO implement changing directory
+	  break;
+	  
 	case INVALID:
 	  printf("Invalid command\n");
 	  break;
+	  
     case NOTBUILTIN:
       fork_and_run(command);
     break;
