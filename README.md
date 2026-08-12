@@ -15,7 +15,10 @@ specific logic before either running such commands via recursion or simply retur
 command 
 
 ## Features
-- [x] 
+- [x] Calling not built in commands
+- [x] Passing command arguments
+- [x] Error handling
+- [ ] I/O redirections
 
 ## Running
 Techshell can be build via gcc (or any other C compiler)like so:
@@ -32,7 +35,7 @@ It can then be ran like any other binary:
 
 | Name | Work Summary |
 |------|--------------|
-| Anthony Chester | {Type what you did here} |
+| Anthony Chester | { Set basic skeleton for project, Wrote Split by String function, Made minimal working version of Split Commands function } |
 | Inioluwa Ebofin | {Type what you did here} |
 | Madison Leblanc  | {Type what you did here} |
 | Jordan Owens | {Type what you did here} |
