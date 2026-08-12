@@ -1,0 +1,52 @@
+Script started on 2026-08-12 16:52:18-05:00 [TERM="linux" TTY="/dev/tty2" COLUMNS="160" LINES="45"]
+[?2004h[root@ac-laptop Techshell.c]# gcc Techshell.c -o Techshell
+[?2004l[?2004h[root@ac-laptop Techshell.c]# ./Techshell 
+[?2004l$ ls
+new.txt  README.md  Techshell  Techshell.c  typescript
+$ ls -l
+total 32
+-rw-r--r-- 1 achester88 achester88     0 Aug 12 16:48 new.txt
+-rw-r--r-- 1 achester88 achester88  2253 Aug 12 16:46 README.md
+-rwxr-xr-x 1 root       root       17240 Aug 12 16:52 Techshell
+-rw-r--r-- 1 achester88 achester88  7028 Aug 12 16:46 Techshell.c
+-rw-r--r-- 1 achester88 achester88     0 Aug 12 16:52 typescript
+$ ps
+    PID TTY          TIME CMD
+   8371 pts/0    00:00:00 bash
+   8377 pts/0    00:00:00 Techshell
+   8380 pts/0    00:00:00 ps
+$ whereis ps
+ps: /usr/bin/ps /usr/share/man/man1/ps.1.gz
+$ horseh face
+Error 2 (No such file or directory)
+$ cd .. ..
+Invalid command
+$ cd ..
+$ ls
+new.txt  README.md  Techshell  Techshell.c  typescript
+$ pwd
+/home/achester88/Projects/Techshell.c
+$ cd ..
+$ pwd
+/home/achester88/Projects/Techshell.c
+$ ech   ho "h Hi"
+"Hi"
+$ ls  ls -l && echo "WOW"
+total 32
+-rw-r--r-- 1 achester88 achester88     0 Aug 12 16:48 new.txt
+-rw-r--r-- 1 achester88 achester88  2253 Aug 12 16:46 README.md
+-rwxr-xr-x 1 root       root       17240 Aug 12 16:52 Techshell
+-rw-r--r-- 1 achester88 achester88  7028 Aug 12 16:46 Techshell.c
+-rw-r--r-- 1 achester88 achester88     0 Aug 12 16:52 typescript
+"WOW"
+$ ls -l ls.out
+ls: cannot access 'ls.out': No such file or directory
+$ ls -l ls  > ls.out
+$ ls
+new.txt  README.md  Techshell  Techshell.c  typescript
+$ wc -l < ls.out
+$ exit
+done[?2004h[root@ac-laptop Techshell.c]# exit
+[?2004lexit
+
+Script done on 2026-08-12 16:54:29-05:00 [COMMAND_EXIT_CODE="0"]
