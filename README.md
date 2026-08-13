@@ -40,5 +40,5 @@ It can then be ran like any other binary:
 | Madison Leblanc  | { Expanded the shell parser by adding support for command operators, redirection filenames, invalid command checks, cd command parsing, and empty input handling } |
 | Jordan Owens | {Type what you did here} |
 | Ayomide Oyekunle | {Type what you did here} |
-| Calvin Vanner | {Type what you did here} |
+| Calvin Vanner | {Implemented working I/O command Redirections ( '<', '>', '>>', and '2>')} |
 
