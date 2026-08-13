@@ -1,11 +1,11 @@
+#include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
-#include <errno.h>
+#include <unistd.h>
 enum CMD {
 
   THEN,      //  &&
@@ -21,28 +21,27 @@ enum CMD {
   NOTBUILTIN
 };
 
-typedef struct ShellCommand{
+typedef struct ShellCommand {
   enum CMD cmd;
   struct ShellCommand *left_cmd;
   struct ShellCommand *right_cmd;
   char **args;
-  
+
   // redirection file names
   char *input_file;
   char *output_file;
   char *error_file;
-  
+
   // directory used for cd
   char *directory;
-  
+
 } ShellCommand;
 
+char **SpiltBySpace(char *input) {
+  char **words_by_space = calloc(20, sizeof(char *));
 
-char** SpiltBySpace(char* input) {
-  char **words_by_space = calloc(20, sizeof(char*));
-
-  for(int i=0;i<=10;i++) {
-    words_by_space[i] = (char*) calloc(1, 50);
+  for (int i = 0; i <= 10; i++) {
+    words_by_space[i] = (char *)calloc(1, 50);
   }
 
   int wbsi = 0;
@@ -50,133 +49,130 @@ char** SpiltBySpace(char* input) {
   int cur_word_index = 0;
   int length = strlen(input);
 
-  for (int i = 0; i < length; i ++) {
+  for (int i = 0; i < length; i++) {
     char c = input[i];
     if ((c == ' ') || (c == '\n')) {
-      //check new word
+      // check new word
       cur_word[cur_word_index] += '\0';
 
-      //push cur word to arr of words
+      // push cur word to arr of words
       strcpy(words_by_space[wbsi], cur_word);
       wbsi += 1;
 
-      //reset cur word
+      // reset cur word
       memset(cur_word, '\0', sizeof(cur_word));
       cur_word_index = 0;
 
-    } else { //keep adding
+    } else { // keep adding
       cur_word[cur_word_index] = c;
       cur_word_index += 1;
     }
   }
 
-  //Null is added so we know when the words arr ends
+  // Null is added so we know when the words arr ends
   words_by_space[wbsi] = NULL;
 
   return words_by_space;
 }
 
-void print_string_arr(char** input) {
+void print_string_arr(char **input) {
   int ti = 0;
-  while(input[ti] != NULL) {
+  while (input[ti] != NULL) {
     printf("%s ", input[ti]);
     ti += 1;
   }
   printf("\n");
 }
 
-
-ShellCommand* SpiltIntoCmd(char** input) {
-  //Split up to allow for presidance (Handle < before &&)
-  const char *special_ops[][5] = { {"<", ">", ">>", "2>", NULL}, {"|", NULL}, {"&&", "||", NULL} };
+ShellCommand *SpiltIntoCmd(char **input) {
+  // Split up to allow for presidance (Handle < before &&)
+  const char *special_ops[][5] = {
+      {"<", ">", ">>", "2>", NULL}, {"|", NULL}, {"&&", "||", NULL}};
 
   ShellCommand *CommandInfo = calloc(1, sizeof(ShellCommand));
 
-  //Find the size of the input/words by space
+  // Find the size of the input/words by space
   int size_of_wbs = 0;
   while (input[size_of_wbs] != NULL) {
     size_of_wbs += 1;
   }
 
-  //Loop over all of the speical operators 
-  for (int i = 0; i < 3; i++ ) {
+  // Loop over all of the speical operators
+  for (int i = 0; i < 3; i++) {
     int ii = 0;
-    while (special_ops[i][ii] != NULL) { //for (int ii = 0; ii <= 4; ii++) {
-     
-      //Loop over input 
+    while (special_ops[i][ii] != NULL) { // for (int ii = 0; ii <= 4; ii++) {
+
+      // Loop over input
       for (int j = 0; j < size_of_wbs; j++) {
 
-        //Check for match
+        // Check for match
         if (strcmp(special_ops[i][ii], input[j]) == 0) {
-          // If we find a match we split the two sides of the match and parse both of them, before assign to a parent command
-		  
-		  // make sure the operator has something on both sides
-		  if (j == 0 || j == size_of_wbs - 1) {
-			  CommandInfo->cmd = INVALID;
-			  return CommandInfo;
-		  }
-		  
-          //Check what the match was then assign the matching enum value
-          if (strcmp(input[j], "&&") == 0) {
-              CommandInfo->cmd = THEN;
-          }
-          else if (strcmp(input[j], "||") == 0) {
-			  CommandInfo->cmd = ELSE;
-		  }
-		  else if (strcmp(input[j], ">") == 0) {
-			  CommandInfo->cmd = OUTPUT;
-			  CommandInfo->output_file = strdup(input[j + 1]);
-		  }
-		  else if (strcmp(input[j], "<") == 0) {
-			  CommandInfo->cmd = INPUT;
-			  CommandInfo->input_file = strdup(input[j + 1]);
-		  }
-		  else if (strcmp(input[j], ">>") == 0) {
-			  CommandInfo->cmd = APPEND;
-			  CommandInfo->output_file = strdup(input[j + 1]);
-		  }
-		  else if (strcmp(input[j], "2>") == 0) {
-			  CommandInfo->cmd = ERRAPPEND;
-			  CommandInfo->error_file = strdup(input[j + 1]);
-		  }
-		  else if (strcmp(input[j], "|") == 0) {
-			  CommandInfo->cmd = PIPE;
-		  }
+          // If we find a match we split the two sides of the match and parse
+          // both of them, before assign to a parent command
 
-          //Calc size of each half
+          // make sure the operator has something on both sides
+          if (j == 0 || j == size_of_wbs - 1) {
+            CommandInfo->cmd = INVALID;
+            return CommandInfo;
+          }
+
+          // Check what the match was then assign the matching enum value
+          if (strcmp(input[j], "&&") == 0) {
+            CommandInfo->cmd = THEN;
+          } else if (strcmp(input[j], "||") == 0) {
+            CommandInfo->cmd = ELSE;
+          } else if (strcmp(input[j], ">") == 0) {
+            CommandInfo->cmd = OUTPUT;
+            CommandInfo->output_file = strdup(input[j + 1]);
+          } else if (strcmp(input[j], "<") == 0) {
+            CommandInfo->cmd = INPUT;
+            CommandInfo->input_file = strdup(input[j + 1]);
+          } else if (strcmp(input[j], ">>") == 0) {
+            CommandInfo->cmd = APPEND;
+            CommandInfo->output_file = strdup(input[j + 1]);
+          } else if (strcmp(input[j], "2>") == 0) {
+            CommandInfo->cmd = ERRAPPEND;
+            CommandInfo->error_file = strdup(input[j + 1]);
+          } else if (strcmp(input[j], "|") == 0) {
+            CommandInfo->cmd = PIPE;
+          }
+
+          // Calc size of each half
           int lhs = j + 1;
           int rhs = size_of_wbs - j;
 
-          char **left_half = calloc( lhs, sizeof(char*));
-          char **right_half = calloc( rhs, sizeof(char*));
+          char **left_half = calloc(lhs, sizeof(char *));
+          char **right_half = calloc(rhs, sizeof(char *));
 
-          //Preassign size for each word in each half
-          for(int i=0;i<=lhs;i++) {
-            left_half[i] = (char*) calloc(1, 50);
+          // Preassign size for each word in each half
+          for (int i = 0; i <= lhs; i++) {
+            left_half[i] = (char *)calloc(1, 50);
           }
-          for(int i=0;i<=rhs;i++) {
-            right_half[i] = (char*) calloc(1, 50);
+          for (int i = 0; i <= rhs; i++) {
+            right_half[i] = (char *)calloc(1, 50);
           }
 
-          //Loop over all words, and split input into 2 array from before and after the match
-          for( int si = 0; si < size_of_wbs; si++ ) {
+          // Loop over all words, and split input into 2 array from before and
+          // after the match
+          for (int si = 0; si < size_of_wbs; si++) {
             if (si < j) {
               strcpy(left_half[si], input[si]);
             } else if (si > j) {
-              strcpy(right_half[si-j-1], input[si]);
+              strcpy(right_half[si - j - 1], input[si]);
             }
           }
-       
-          //Add NULL to end so we can detect the end of the array later on
+
+          // Add NULL to end so we can detect the end of the array later on
           left_half[lhs - 1] = NULL;
           right_half[rhs - 1] = NULL;
 
           ShellCommand *CommandLeft = calloc(1, sizeof(ShellCommand));
           ShellCommand *CommandRight = calloc(1, sizeof(ShellCommand));
 
-          //Recursive call to SpiltIntoCmd to keep going untill it returns only one command
-          CommandLeft = SpiltIntoCmd( left_half );
-          CommandRight = SpiltIntoCmd( right_half );
+          // Recursive call to SpiltIntoCmd to keep going untill it returns only
+          // one command
+          CommandLeft = SpiltIntoCmd(left_half);
+          CommandRight = SpiltIntoCmd(right_half);
 
           CommandInfo->left_cmd = CommandLeft;
           CommandInfo->right_cmd = CommandRight;
@@ -189,27 +185,24 @@ ShellCommand* SpiltIntoCmd(char** input) {
     }
   }
 
-  //return only one (NO More/Any speicals ops)
- 
-  //TODO Add other built in commands
+  // return only one (NO More/Any speicals ops)
+
+  // TODO Add other built in commands
   if (strcmp(input[0], "exit") == 0) {
     CommandInfo->cmd = EXIT;
-  }
-  else if (strcmp(input[0], "cd") == 0) {
-	
-	// cd should only have one directory argument
-	if (input[2] != NULL) {
-		CommandInfo->cmd = INVALID;
-	}
-	else {
-		CommandInfo->cmd = CD;
-	
-		if (input[1] != NULL) {
-			CommandInfo->directory = strdup(input[1]);
-		}
-	}
-  }
-  else {
+  } else if (strcmp(input[0], "cd") == 0) {
+
+    // cd should only have one directory argument
+    if (input[2] != NULL) {
+      CommandInfo->cmd = INVALID;
+    } else {
+      CommandInfo->cmd = CD;
+
+      if (input[1] != NULL) {
+        CommandInfo->directory = strdup(input[1]);
+      }
+    }
+  } else {
     CommandInfo->cmd = NOTBUILTIN;
   }
 
@@ -233,58 +226,62 @@ void fork_and_run(ShellCommand *command) {
   wait(NULL);
 }
 
-char* CommandPrompt() {
+char *CommandPrompt() {
   char *raw_input = calloc(100, sizeof(char));
-  //Print current dir, and username
+  // Print current dir, and username
   printf("$ ");
-fgets(raw_input, 100, stdin);
+  fgets(raw_input, 100, stdin);
   return raw_input;
 }
 
-
-ShellCommand* ParseCommandLine(char* input) {
+ShellCommand *ParseCommandLine(char *input) {
   ShellCommand *CommandInfo = calloc(1, sizeof(ShellCommand));
- 
-  char** spilt_by_space = SpiltBySpace(input);
+
+  char **spilt_by_space = SpiltBySpace(input);
 
   CommandInfo = SpiltIntoCmd(spilt_by_space);
 
   return CommandInfo;
 }
 
-
-void ExecuteCommand(ShellCommand* command) {
+void ExecuteCommand(ShellCommand *command) {
   switch (command->cmd) {
-    //TODO Add other built-ins to be handled
-    case THEN:
-      ExecuteCommand(command->left_cmd);
-      //TODO: Check for Success before running right
-      ExecuteCommand(command->right_cmd);
+  // TODO Add other built-ins to be handled
+  case THEN:
+    ExecuteCommand(command->left_cmd);
+    // TODO: Check for Success before running right
+    ExecuteCommand(command->right_cmd);
     break;
-	
-    case EXIT:
-      printf("done");
-      exit(0);
+
+  case EXIT:
+    printf("done");
+    exit(0);
     break;
-	
-	case CD:
-	  // TODO implement changing directory
-	  break;
-	  
-	case INVALID:
-	  printf("Invalid command\n");
-	  break;
-	  
-    case NOTBUILTIN:
-      fork_and_run(command);
+
+  case CD: {
+    char *dir = command->directory;
+    if (dir == NULL || dir[0] == '\0') {
+      dir = getenv("HOME");
+    }
+    if (chdir(dir) != 0) {
+      fprintf(stderr, "Error %d (%s)\n", errno, strerror(errno));
+    }
+    break;
+  }
+
+  case INVALID:
+    printf("Invalid command\n");
+    break;
+
+  case NOTBUILTIN:
+    fork_and_run(command);
     break;
   }
 }
 
-
 int main() {
-  char* input;
-  ShellCommand* command;
+  char *input;
+  ShellCommand *command;
 
   for (;;) {
     input = CommandPrompt();
