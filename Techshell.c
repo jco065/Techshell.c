@@ -91,7 +91,13 @@ ShellCommand* SpiltIntoCmd(char** input) {
   const char *special_ops[][5] = { {"<", ">", ">>", "2>", NULL}, {"|", NULL}, {"&&", "||", NULL} };
 
   ShellCommand *CommandInfo = calloc(1, sizeof(ShellCommand));
-
+  
+  // check if user entered an empty command
+  if (input[0] == NULL) {
+	CommandInfo->cmd = INVALID;
+	return CommandInfo;
+  }
+  
   //Find the size of the input/words by space
   int size_of_wbs = 0;
   while (input[size_of_wbs] != NULL) {
