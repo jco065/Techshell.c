@@ -218,33 +218,97 @@ ShellCommand* SpiltIntoCmd(char** input) {
   return CommandInfo;
 }
 
-void fork_and_run(ShellCommand *command) {
+//arguments for types of files 
+void fork_and_run(ShellCommand *command, char *input_file, char *output_file, char *error_file, enum CMD output_option) {
   char **args = command->args;
   pid_t pid = fork();
   if (pid < 0) {
     perror("fork");
     return;
   }
+  //child process 
   if (pid == 0) {
+    //Input File
+    if (input_file != NULL) {
+	//grabs the fd(file desciptor)
+	int input_fd = open(input_file, O_RDONLY);
+	if (input_fd < 0){
+		perror("Can't open input file");
+		exit(1);
+	}
+	//STDIN is replaced by the input file
+	if (dup2(input_fd, STDIN_FILENO) < 0) {
+		perror("dup2");
+		close(input_fd);
+		exit(1);
+	}
+	//Duplicated descriptor is used as stdin
+	close(input_fd);
+    }
+   //Output File ( > or >> )
+   if (output_file != NULL) {
+	//grabs the fd(file descriptor)
+	int output_fd;
+	//Checks if '>'
+	if (output_option == OUTPUT){
+		output_fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	}
+	//Checks if '>>'
+	else if (output_option == APPEND){
+		output_fd = open(output_file, O_WRONLY | O_CREAT | O_APPEND, 0644);
+	}
+	else{
+		fprintf(stderr, "Not correct output option");
+		exit(1);
+	}
+	if (output_fd < 0) {
+		perror("Can't open output file");
+		exit(1);
+	}
+	//STOUT is replaced by the output file
+	if (dup2(output_fd, STDOUT_FILENO) < 0) {
+		perror("dup2");
+		close(output_fd);
+		exit(1);
+	}
+	//Duplicated descriptor is used as stdout
+	close(output_fd);
+    }
+  //Error File ( 2> )
+  if (error_file != NULL) {
+	int error_fd = open(error_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (error_fd < 0){
+		perror("Can't open error file");
+		exit(1);
+	}
+	//STDERR is replaced by the output file
+	if (dup2(error_fd, STDERR_FILENO) < 0){
+		perror("dup2");
+		close(error_fd);
+		exit(1);
+	}
+	//Duplicated decripter is used as stderr
+	close(error_fd);
+  }
+    //Replace the child process with the program
     execvp(args[0], args);
     fprintf(stderr, "Error %d (%s)\n", errno, strerror(errno));
     exit(1);
   }
   wait(NULL);
 }
-
 char* CommandPrompt() {
   char *raw_input = calloc(100, sizeof(char));
   //Print current dir, and username
   printf("$ ");
-fgets(raw_input, 100, stdin);
+  fgets(raw_input, 100, stdin);
   return raw_input;
 }
 
 
 ShellCommand* ParseCommandLine(char* input) {
   ShellCommand *CommandInfo = calloc(1, sizeof(ShellCommand));
- 
+
   char** spilt_by_space = SpiltBySpace(input);
 
   CommandInfo = SpiltIntoCmd(spilt_by_space);
@@ -261,23 +325,39 @@ void ExecuteCommand(ShellCommand* command) {
       //TODO: Check for Success before running right
       ExecuteCommand(command->right_cmd);
     break;
-	
+
+    // Exit Shell
     case EXIT:
       printf("done");
       exit(0);
     break;
-	
 	case CD:
 	  // TODO implement changing directory
 	  break;
-	  
+
 	case INVALID:
 	  printf("Invalid command\n");
 	  break;
-	  
+	//Execute command without redirection
     case NOTBUILTIN:
-      fork_and_run(command);
+      fork_and_run(command, NULL, NULL, NULL, INVALID);
     break;
+	// '<'
+    case INPUT:
+	fork_and_run(command->left_cmd, command->input_file, NULL, NULL, INVALID);
+    break;
+	// '>'
+    case OUTPUT:
+	fork_and_run(command->left_cmd, NULL, command->output_file, NULL, OUTPUT);
+    break;
+	// '>>'
+   case APPEND:
+	fork_and_run(command->left_cmd, NULL, command->output_file, NULL, APPEND);
+	break;
+	// '2>'
+   case ERRAPPEND:
+	fork_and_run(command->left_cmd, NULL, NULL, command->error_file, ERRAPPEND);
+	break;
   }
 }
 
