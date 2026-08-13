@@ -53,12 +53,15 @@ char **SpiltBySpace(char *input) {
     char c = input[i];
     if ((c == ' ') || (c == '\n')) {
       // check new word
-      cur_word[cur_word_index] += '\0';
+      // had to add this to fix the command    thing  if  we dont have this it
+      // wouldnt run
+      if (cur_word_index > 0) {
+        cur_word[cur_word_index] += '\0';
 
-      // push cur word to arr of words
-      strcpy(words_by_space[wbsi], cur_word);
-      wbsi += 1;
-
+        // push cur word to arr of words
+        strcpy(words_by_space[wbsi], cur_word);
+        wbsi += 1;
+      }
       // reset cur word
       memset(cur_word, '\0', sizeof(cur_word));
       cur_word_index = 0;
@@ -193,9 +196,12 @@ ShellCommand *SpiltIntoCmd(char **input) {
   } else if (strcmp(input[0], "cd") == 0) {
 
     // cd should only have one directory argument
-    if (input[2] != NULL) {
-      CommandInfo->cmd = INVALID;
-    } else {
+    //J.O comment must check input[1] first  but your tokenizer prefills slots 
+     // meaning that input[2] wouldnt be null destroying cd 
+    if (input[1] != NULL && input[2] != NULL) {
+          CommandInfo->cmd = INVALID;
+    } 
+    else {
       CommandInfo->cmd = CD;
 
       if (input[1] != NULL) {
@@ -211,21 +217,85 @@ ShellCommand *SpiltIntoCmd(char **input) {
   return CommandInfo;
 }
 
-void fork_and_run(ShellCommand *command) {
+// arguments for types of files
+void fork_and_run(ShellCommand *command, char *input_file, char *output_file,
+                  char *error_file, enum CMD output_option) {
   char **args = command->args;
   pid_t pid = fork();
   if (pid < 0) {
     perror("fork");
     return;
   }
+  // child process
   if (pid == 0) {
+    // Input File
+    if (input_file != NULL) {
+      // grabs the fd(file desciptor)
+      int input_fd = open(input_file, O_RDONLY);
+      if (input_fd < 0) {
+        perror("Can't open input file");
+        exit(1);
+      }
+      // STDIN is replaced by the input file
+      if (dup2(input_fd, STDIN_FILENO) < 0) {
+        perror("dup2");
+        close(input_fd);
+        exit(1);
+      }
+      // Duplicated descriptor is used as stdin
+      close(input_fd);
+    }
+    // Output File ( > or >> )
+    if (output_file != NULL) {
+      // grabs the fd(file descriptor)
+      int output_fd;
+      // Checks if '>'
+      if (output_option == OUTPUT) {
+        output_fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      }
+      // Checks if '>>'
+      else if (output_option == APPEND) {
+        output_fd = open(output_file, O_WRONLY | O_CREAT | O_APPEND, 0644);
+      } else {
+        fprintf(stderr, "Not correct output option");
+        exit(1);
+      }
+      if (output_fd < 0) {
+        perror("Can't open output file");
+        exit(1);
+      }
+      // STOUT is replaced by the output file
+      if (dup2(output_fd, STDOUT_FILENO) < 0) {
+        perror("dup2");
+        close(output_fd);
+        exit(1);
+      }
+      // Duplicated descriptor is used as stdout
+      close(output_fd);
+    }
+    // Error File ( 2> )
+    if (error_file != NULL) {
+      int error_fd = open(error_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (error_fd < 0) {
+        perror("Can't open error file");
+        exit(1);
+      }
+      // STDERR is replaced by the output file
+      if (dup2(error_fd, STDERR_FILENO) < 0) {
+        perror("dup2");
+        close(error_fd);
+        exit(1);
+      }
+      // Duplicated decripter is used as stderr
+      close(error_fd);
+    }
+    // Replace the child process with the program
     execvp(args[0], args);
     fprintf(stderr, "Error %d (%s)\n", errno, strerror(errno));
     exit(1);
   }
   wait(NULL);
 }
-
 char *CommandPrompt() {
   char *raw_input = calloc(100, sizeof(char));
   // Print current dir, and username
@@ -268,13 +338,26 @@ void ExecuteCommand(ShellCommand *command) {
     }
     break;
   }
-
   case INVALID:
     printf("Invalid command\n");
     break;
-
   case NOTBUILTIN:
-    fork_and_run(command);
+    fork_and_run(command, NULL, NULL, NULL, INVALID);
+    break;
+  case INPUT:
+    fork_and_run(command->left_cmd, command->input_file, NULL, NULL, INVALID);
+    break;
+    // '>'
+  case OUTPUT:
+    fork_and_run(command->left_cmd, NULL, command->output_file, NULL, OUTPUT);
+    break;
+    // '>>'
+  case APPEND:
+    fork_and_run(command->left_cmd, NULL, command->output_file, NULL, APPEND);
+    break;
+    // '2>'
+  case ERRAPPEND:
+    fork_and_run(command->left_cmd, NULL, NULL, command->error_file, ERRAPPEND);
     break;
   }
 }
