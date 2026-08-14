@@ -40,7 +40,7 @@ typedef struct ShellCommand {
 char **SpiltBySpace(char *input) {
   char **words_by_space = calloc(20, sizeof(char *));
 
-  for (int i = 0; i <= 10; i++) {
+  for (int i = 0; i <= 19; i++) {
     words_by_space[i] = (char *)calloc(1, 50);
   }
 
@@ -196,12 +196,11 @@ ShellCommand *SpiltIntoCmd(char **input) {
   } else if (strcmp(input[0], "cd") == 0) {
 
     // cd should only have one directory argument
-    //J.O comment must check input[1] first  but your tokenizer prefills slots 
-     // meaning that input[2] wouldnt be null destroying cd 
+    // J.O comment must check input[1] first  but your tokenizer prefills slots
+    // meaning that input[2] wouldnt be null destroying cd
     if (input[1] != NULL && input[2] != NULL) {
-          CommandInfo->cmd = INVALID;
-    } 
-    else {
+      CommandInfo->cmd = INVALID;
+    } else {
       CommandInfo->cmd = CD;
 
       if (input[1] != NULL) {
@@ -296,6 +295,53 @@ void fork_and_run(ShellCommand *command, char *input_file, char *output_file,
   }
   wait(NULL);
 }
+
+// so many error handlings cause i wanted to learn a little more about waitpid
+// and the sytems with that
+int fork_and_run_pipe(ShellCommand *left_cmd, ShellCommand *right_cmd) {
+  // error file descriptor
+  int fds[2];
+  if (pipe(fds) == -1) {
+    perror("something wrong with thee pipe");
+    return -1;
+  }
+  pid_t pid = fork();
+  // first command ran of the
+  if (pid == 0) {
+    // read part of pipe
+    // duppp the file of the first and send it  o end pip then send it to the
+    // othe process
+    dup2(fds[1], STDOUT_FILENO);
+    close(fds[0]);
+    close(fds[1]);
+    execvp(left_cmd->args[0], left_cmd->args);
+    perror(left_cmd->args[0]); // if it reached here exec failed
+    exit(EXIT_FAILURE);        // macro this is bacisaly exit(1)
+  }
+
+  pid_t pid2 = fork();
+  if (pid2 == 0) {
+    dup2(fds[0], STDIN_FILENO);
+    close(fds[0]);
+    close(fds[1]);
+    execvp(right_cmd->args[0], right_cmd->args);
+    perror(right_cmd->args[0]); // if it reached here exec failed
+    exit(EXIT_FAILURE);
+  }
+  // closes parent 
+  close(fds[0]);
+  close(fds[1]);
+  // i need  a way  to have the parent staus wait for the process to run
+  int parentWAIT;
+  waitpid(pid, NULL, 0); // this is the first cmd
+  waitpid(pid2, &parentWAIT, 0);
+  if (WIFEXITED(parentWAIT))
+    return WEXITSTATUS(parentWAIT);
+  if (WIFSIGNALED(parentWAIT))
+    return 128 + WTERMSIG(parentWAIT);
+  return -1;
+}
+
 char *CommandPrompt() {
   char *raw_input = calloc(100, sizeof(char));
   // Print current dir, and username
@@ -359,6 +405,11 @@ void ExecuteCommand(ShellCommand *command) {
   case ERRAPPEND:
     fork_and_run(command->left_cmd, NULL, NULL, command->error_file, ERRAPPEND);
     break;
+  case PIPE: {
+    fork_and_run_pipe(command->left_cmd, command->right_cmd);
+    break;
+    // ||
+  }
   }
 }
 
