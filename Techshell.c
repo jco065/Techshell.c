@@ -36,6 +36,17 @@ typedef struct ShellCommand {
   char *directory;
 
 } ShellCommand;
+//looks bad but i should've functional protoyped everything a long time ago im postivve me my pipe stuff | stuff | tuff case wasnt working from that 
+char **SpiltBySpace(char *input);
+void print_string_arr(char **input);
+ShellCommand *SpiltIntoCmd(char **input);
+int fork_and_run(ShellCommand *command, char *input_file, char *output_file,char *error_file, enum CMD output_option);
+int fork_and_run_pipe(ShellCommand *left_cmd, ShellCommand *right_cmd);
+char *CommandPrompt(char *cwd);
+ShellCommand *ParseCommandLine(char *input);
+int ExecuteCommand(ShellCommand *command);
+int main(void);
+
 
 char **SpiltBySpace(char *input) {
   char **words_by_space = calloc(20, sizeof(char *));
@@ -330,6 +341,11 @@ int fork_and_run_pipe(ShellCommand *left_cmd, ShellCommand *right_cmd) {
     dup2(fds[1], STDOUT_FILENO);
     close(fds[0]);
     close(fds[1]);
+    ///RECURION USE Maybe i did learn stuff form data structures 
+if(left_cmd->cmd == PIPE){
+  exit(ExecuteCommand(left_cmd));
+}
+
     execvp(left_cmd->args[0], left_cmd->args);
     perror(left_cmd->args[0]); // if it reached here exec failed
     exit(EXIT_FAILURE);        // macro this is bacisaly exit(1)
@@ -340,6 +356,9 @@ int fork_and_run_pipe(ShellCommand *left_cmd, ShellCommand *right_cmd) {
     dup2(fds[0], STDIN_FILENO);
     close(fds[0]);
     close(fds[1]);
+    if(right_cmd->cmd == PIPE){
+  exit(ExecuteCommand(right_cmd));
+}
     execvp(right_cmd->args[0], right_cmd->args);
     perror(right_cmd->args[0]); // if it reached here exec failed
     exit(EXIT_FAILURE);
