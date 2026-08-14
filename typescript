@@ -1,52 +1,66 @@
-Script started on 2026-08-12 16:52:18-05:00 [TERM="linux" TTY="/dev/tty2" COLUMNS="160" LINES="45"]
-[?2004h[root@ac-laptop Techshell.c]# gcc Techshell.c -o Techshell
+Script started on 2026-08-13 23:33:45-05:00 [TERM="linux" TTY="/dev/tty2" COLUMNS="160" LINES="45"]
+[?2004h[root@ac-laptop Techshell.c]# gcc Techshell.c -o Techshell
 [?2004l[?2004h[root@ac-laptop Techshell.c]# ./Techshell 
-[?2004l$ ls
-new.txt  README.md  Techshell  Techshell.c  typescript
-$ ls -l
-total 32
--rw-r--r-- 1 achester88 achester88     0 Aug 12 16:48 new.txt
--rw-r--r-- 1 achester88 achester88  2253 Aug 12 16:46 README.md
--rwxr-xr-x 1 root       root       17240 Aug 12 16:52 Techshell
--rw-r--r-- 1 achester88 achester88  7028 Aug 12 16:46 Techshell.c
--rw-r--r-- 1 achester88 achester88     0 Aug 12 16:52 typescript
-$ ps
-    PID TTY          TIME CMD
-   8371 pts/0    00:00:00 bash
-   8377 pts/0    00:00:00 Techshell
-   8380 pts/0    00:00:00 ps
-$ whereis ps
-ps: /usr/bin/ps /usr/share/man/man1/ps.1.gz
-$ horseh face
+[?2004l/home/achester88/Projects/Techshell.c$ pwd
+/home/achester88/Projects/Techshell.c
+/home/achester88/Projects/Techshell.c$ cd Desktop
 Error 2 (No such file or directory)
-$ cd .. ..
-Invalid command
-$ cd ..
-$ ls
-new.txt  README.md  Techshell  Techshell.c  typescript
-$ pwd
-/home/achester88/Projects/Techshell.c
-$ cd ..
-$ pwd
-/home/achester88/Projects/Techshell.c
-$ ech   ho "h Hi"
-"Hi"
-$ ls  ls -l && echo "WOW"
-total 32
--rw-r--r-- 1 achester88 achester88     0 Aug 12 16:48 new.txt
--rw-r--r-- 1 achester88 achester88  2253 Aug 12 16:46 README.md
--rwxr-xr-x 1 root       root       17240 Aug 12 16:52 Techshell
--rw-r--r-- 1 achester88 achester88  7028 Aug 12 16:46 Techshell.c
--rw-r--r-- 1 achester88 achester88     0 Aug 12 16:52 typescript
-"WOW"
-$ ls -l ls.out
-ls: cannot access 'ls.out': No such file or directory
-$ ls -l ls  > ls.out
-$ ls
-new.txt  README.md  Techshell  Techshell.c  typescript
-$ wc -l < ls.out
-$ exit
+/home/achester88/Projects/Techshell.c$ mkdir Desktop
+/home/achester88/Projects/Techshell.c$ cd Desktop
+/home/achester88/Projects/Techshell.c/Desktop$ l pwd
+/home/achester88/Projects/Techshell.c/Desktop
+/home/achester88/Projects/Techshell.c/Desktop$ ls  cd ..
+/home/achester88/Projects/Techshell.c$ ls
+Desktop  README.md  Techshell  Techshell.c  typescript
+/home/achester88/Projects/Techshell.c$ ls -lh Techshell.c
+-rw-r--r-- 1 achester88 achester88 13K Aug 13 23:32 Techshell.c
+/home/achester88/Projects/Techshell.c$ ls /root
+snap
+/home/achester88/Projects/Techshell.c$ horseface
+Error 2 (No such file or directory)
+/home/achester88/Projects/Techshell.c$ cd /root
+/root$ cd / ../home
+/home$ cd / ac  /achester88/Project/ s
+Error 2 (No such file or directory)
+/home$ cd    ls
+achester88
+/home$ cd achester88             ps
+    PID TTY          TIME CMD
+   5935 pts/0    00:00:00 bash
+   5941 pts/0    00:00:00 Techshell
+   5953 pts/0    00:00:00 ps
+/home$ whereis ps
+ps: /usr/bin/ps /usr/share/man/man1/ps.1.gz
+/home$ /bin/ps u
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         823  0.0  0.0   8908  2824 tty1     Ss+  21:15   0:00 /usr/bin/agetty --noreset --noclear - linux
+root         824  0.0  0.0   8556  5172 tty2     Ss   21:15   0:00 /usr/bin/ly-dm
+root        5408  0.0  0.0  15632  8916 tty2     S    23:30   0:00 /usr/bin/ly-dm
+root        5917  0.0  0.0  10652  6648 tty2     S    23:32   0:00 su
+root        5920  0.0  0.0   8064  6512 tty2     S    23:32   0:00 bash
+root        5934  0.0  0.0   5780  4048 tty2     S+   23:33   0:00 script
+root        5935  0.0  0.0   8176  6576 pts/0    Ss   23:33   0:00 bash -i
+root        5941  0.0  0.0   2752  1912 pts/0    S+   23:33   0:00 ./Techshell
+root        5955  0.0  0.0  10092  6124 pts/0    R+   23:35   0:00 /bin/ps u
+/home$ ps u > ps.out
+/home$ ls
+achester88  ps.out
+/home$ wc -l < ps.out
+10
+/home$ wc -l < ps.out > wc.out
+10
+/home$ cat wc.out
+cat: wc.out: No such file or directory
+/home$ ls
+achester88  ps.out
+/home$ ls -lh && echo "next" && pwd
+total 32K
+drwx------ 67 achester88 achester88 24K Aug 13 23:29 achester88
+-rw-r--r--  1 root       root       792 Aug 13 23:36 ps.out
+"next"
+/home
+/home$ exit
 done[?2004h[root@ac-laptop Techshell.c]# exit
 [?2004lexit
 
-Script done on 2026-08-12 16:54:29-05:00 [COMMAND_EXIT_CODE="0"]
+Script done on 2026-08-13 23:37:16-05:00 [COMMAND_EXIT_CODE="0"]
