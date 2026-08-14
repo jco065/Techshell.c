@@ -1,5 +1,5 @@
 # Techshell Project
-Techshell is a bash like Linux shell written in C for LaTech's CSC2223 Systems Programming course
+###### a bash like Linux shell written in C for LaTech's CSC2223 Systems Programming course
 
 ## Breakdown
 Techshell can broken down into 3 main parts. Taking in input, Parsing that input, and then executing, this is done continuously until the user decides to exit.
