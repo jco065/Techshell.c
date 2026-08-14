@@ -217,13 +217,17 @@ ShellCommand *SpiltIntoCmd(char **input) {
 }
 
 // arguments for types of files
-void fork_and_run(ShellCommand *command, char *input_file, char *output_file,
+
+
+// i  had to change your fork and run cause who did the parsing did it in a way where it wants to know if the left 
+// succed if so it does right which is logically true 
+int fork_and_run(ShellCommand *command, char *input_file, char *output_file,
                   char *error_file, enum CMD output_option) {
   char **args = command->args;
   pid_t pid = fork();
   if (pid < 0) {
     perror("fork");
-    return;
+    return -1;
   }
   // child process
   if (pid == 0) {
@@ -293,7 +297,13 @@ void fork_and_run(ShellCommand *command, char *input_file, char *output_file,
     fprintf(stderr, "Error %d (%s)\n", errno, strerror(errno));
     exit(1);
   }
-  wait(NULL);
+ int parentWAIT;
+  waitpid(pid, &parentWAIT, 0);
+  if (WIFEXITED(parentWAIT))
+    return WEXITSTATUS(parentWAIT);
+  if (WIFSIGNALED(parentWAIT))
+    return 128 + WTERMSIG(parentWAIT);
+  return -1;
 }
 
 // so many error handlings cause i wanted to learn a little more about waitpid
@@ -342,11 +352,13 @@ int fork_and_run_pipe(ShellCommand *left_cmd, ShellCommand *right_cmd) {
   return -1;
 }
 
-char *CommandPrompt() {
+char *CommandPrompt(char *cwd) {
   char *raw_input = calloc(100, sizeof(char));
-  // Print current dir, and username
-  printf("$ ");
-  fgets(raw_input, 100, stdin);
+  printf("%s$ ", cwd);
+  if (fgets(raw_input, 100, stdin) == NULL) {
+    printf("\n");
+    exit(0);
+  }
   return raw_input;
 }
 
@@ -359,21 +371,35 @@ ShellCommand *ParseCommandLine(char *input) {
 
   return CommandInfo;
 }
-
-void ExecuteCommand(ShellCommand *command) {
+// who ever did the exectuecommand  stuff wanted  a sucess to see if  the left to succed which is logical so the function cant 
+//reutrn void 
+//   cases || and && depdns on it  
+int  ExecuteCommand(ShellCommand *command) {
   switch (command->cmd) {
   // TODO Add other built-ins to be handled
-  case THEN:
-    ExecuteCommand(command->left_cmd);
-    // TODO: Check for Success before running right
-    ExecuteCommand(command->right_cmd);
-    break;
+    //added your staus check
+  case THEN:{
+    int left = ExecuteCommand(command->left_cmd);
+        // TODO: Check for Success before running right
+    //Sucess check 
+    if(left == 0){
+      return ExecuteCommand(command->right_cmd);
+    }
+          return left;   
+
+}
+case ELSE: {
+    int left = ExecuteCommand(command->left_cmd);
+    if (left != 0){
+      return ExecuteCommand(command->right_cmd);
+    }
+    return left;
+  }
 
   case EXIT:
     printf("done");
     exit(0);
-    break;
-
+    return 0; // doesnt get here if  but complers crying
   case CD: {
     char *dir = command->directory;
     if (dir == NULL || dir[0] == '\0') {
@@ -381,44 +407,55 @@ void ExecuteCommand(ShellCommand *command) {
     }
     if (chdir(dir) != 0) {
       fprintf(stderr, "Error %d (%s)\n", errno, strerror(errno));
+    return -1;
     }
-    break;
+    return 0;
   }
   case INVALID:
     printf("Invalid command\n");
-    break;
+    return -1;
+
   case NOTBUILTIN:
-    fork_and_run(command, NULL, NULL, NULL, INVALID);
-    break;
+    return fork_and_run(command, NULL, NULL, NULL, INVALID);
+    
   case INPUT:
-    fork_and_run(command->left_cmd, command->input_file, NULL, NULL, INVALID);
-    break;
+    return fork_and_run(command->left_cmd, command->input_file, NULL, NULL, INVALID);
+    
     // '>'
   case OUTPUT:
-    fork_and_run(command->left_cmd, NULL, command->output_file, NULL, OUTPUT);
-    break;
+    return fork_and_run(command->left_cmd, NULL, command->output_file, NULL, OUTPUT);
+    
     // '>>'
   case APPEND:
-    fork_and_run(command->left_cmd, NULL, command->output_file, NULL, APPEND);
-    break;
+   return  fork_and_run(command->left_cmd, NULL, command->output_file, NULL, APPEND);
+    
     // '2>'
   case ERRAPPEND:
-    fork_and_run(command->left_cmd, NULL, NULL, command->error_file, ERRAPPEND);
-    break;
+    return fork_and_run(command->left_cmd, NULL, NULL, command->error_file, ERRAPPEND);
+    
   case PIPE: {
-    fork_and_run_pipe(command->left_cmd, command->right_cmd);
-    break;
-    // ||
-  }
-  }
+    return fork_and_run_pipe(command->left_cmd, command->right_cmd);
+    }
+    return -1;
 }
+  
+
+  
+  }
+
 
 int main() {
+  char cwd[1024];
   char *input;
   ShellCommand *command;
 
+
   for (;;) {
-    input = CommandPrompt();
+    //error case 
+    if(getcwd(cwd,sizeof(cwd)) == NULL){
+      perror("getcwd failed");
+    }
+    input = CommandPrompt(cwd);
     // parse the command line
     command = ParseCommandLine(input);
     // execute the command
