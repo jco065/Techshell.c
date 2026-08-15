@@ -36,6 +36,7 @@ typedef struct ShellCommand {
   char *directory;
 
 } ShellCommand;
+
 //looks bad but i should've functional protoyped everything a long time ago im postivve me my pipe stuff | stuff | tuff case wasnt working from that 
 char **SpiltBySpace(char *input);
 void print_string_arr(char **input);
@@ -379,8 +380,12 @@ if(left_cmd->cmd == PIPE){
 
 char *CommandPrompt(char *cwd) {
   char *raw_input = calloc(100, sizeof(char));
-  printf("%s$ ", cwd);
-  if (fgets(raw_input, 100, stdin) == NULL) {
+char host[256];
+gethostname(host, sizeof(host));
+char *user = getlogin();
+if(user == NULL){user = "user";}
+printf("%s@%s:%s$ ", user, host, cwd);
+if (fgets(raw_input, 100, stdin) == NULL) {
     printf("\n");
     exit(0);
   }
@@ -443,49 +448,69 @@ case ELSE: {
   case NOTBUILTIN:
     return fork_and_run(command, NULL, NULL, NULL, INVALID);
     
-  case INPUT:
-    return fork_and_run(command->left_cmd, command->input_file, NULL, NULL, INVALID);
-    
-    // '>'
-  case OUTPUT:
-    return fork_and_run(command->left_cmd, NULL, command->output_file, NULL, OUTPUT);
-    
-    // '>>'
-  case APPEND:
-   return  fork_and_run(command->left_cmd, NULL, command->output_file, NULL, APPEND);
-    
-    // '2>'
-  case ERRAPPEND:
-    return fork_and_run(command->left_cmd, NULL, NULL, command->error_file, ERRAPPEND);
-    
-  case PIPE: {
-    return fork_and_run_pipe(command->left_cmd, command->right_cmd);
-    }
-    return -1;
-}
-  
 
-  
+ // Redirection cases   your parser splits "cmd < in > out" into a tree
+// where the second redirecit lands in a seprate branch. The old cases only read
+//one slot rght then you passed  and wrote NULL into the node doing  nothing with it 
+// Tow it walks through recongized whaat is what and execute
+ case INPUT:
+  case OUTPUT:
+  case APPEND:
+  case ERRAPPEND: {
+    char *in = NULL,
+    *out = NULL,
+    *err = NULL;
+    enum CMD out_opt = INVALID;
+    ShellCommand *node = command;
+    while (node != NULL) {
+      if (node->cmd == INPUT) {
+        in = node->input_file;
+      } else if (node->cmd == OUTPUT || node->cmd == APPEND) {
+        out = node->output_file;
+        out_opt = node->cmd;
+      } else if (node->cmd == ERRAPPEND) {
+        err = node->error_file;
+      } else {
+        break;
+      }
+      ShellCommand *l = node->left_cmd;
+      ShellCommand *r = node->right_cmd;
+      if (l != NULL && (l->cmd == INPUT || l->cmd == OUTPUT || l->cmd == APPEND || l->cmd == ERRAPPEND)) {
+        node = l;
+      } else if (r != NULL && (r->cmd == INPUT || r->cmd == OUTPUT || r->cmd == APPEND || r->cmd == ERRAPPEND)) {
+        node = r;
+      } else {
+        break;
+      }
+    }
+    ShellCommand *real = command;
+    while (real != NULL && (real->cmd == INPUT || real->cmd == OUTPUT || real->cmd == APPEND || real->cmd == ERRAPPEND)) {
+      real = real->left_cmd;
+    }
+    if (real == NULL) {
+      return -1;
+    }
+    return fork_and_run(real, in, out, err, out_opt);
   }
 
+  case PIPE: {
+    return fork_and_run_pipe(command->left_cmd, command->right_cmd);
+  }
+  }
+  return -1;
+}
 
 int main() {
   char cwd[1024];
   char *input;
   ShellCommand *command;
-
-
   for (;;) {
-    //error case 
-    if(getcwd(cwd,sizeof(cwd)) == NULL){
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
       perror("getcwd failed");
     }
     input = CommandPrompt(cwd);
-    // parse the command line
     command = ParseCommandLine(input);
-    // execute the command
     ExecuteCommand(command);
   }
-
   exit(0);
 }
